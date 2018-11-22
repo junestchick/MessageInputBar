@@ -768,7 +768,33 @@ open class MessageInputBar: UIView {
     open func invalidatePlugins() {
         plugins.forEach { $0.invalidate() }
     }
-    
+    // MARK: - Actions
+    private let itemHeight: CGFloat = 40
+    private var itemSize: CGSize = .zero
+    private var selectionItems = [String]() {
+        didSet {
+            let count = selectionItems.count
+            switch selectionItems.count {
+            case 0..<4:
+                itemSize = CGSize(width: topCollectionView.bounds.width / CGFloat(count), height: itemHeight)
+            default:
+                itemSize = CGSize(width: topCollectionView.bounds.width, height: itemHeight)
+            }
+        }
+    }
+    open func showTopView(with selections: [String]) {
+        selectionItems = selections
+        topCollectionView.reloadData()
+        
+        var newCollectionviewHeight: CGFloat = itemHeight
+        if selections.count >= 4 {
+            newCollectionviewHeight = itemHeight * 3
+        }
+        UIView.animate(withDuration: 0.4) {
+            self.collectionViewHeightContraint?.constant = newCollectionviewHeight
+            self.layoutIfNeeded()
+        }
+    }
     // MARK: - User Actions
 
     /// Calls the delegates `didPressSendButtonWith` method
@@ -776,6 +802,30 @@ open class MessageInputBar: UIView {
     /// Invalidates each of the InputPlugins
     open func didSelectSendButton() {
         delegate?.messageInputBar(self, didPressSendButtonWith: inputTextView.text)
+    }
+}
+
+extension MessageInputBar: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        delegate?.messageInputBar(self, didPressSendButtonWith: selectionItems[indexPath.row])
+        UIView.animate(withDuration: 0.4) {
+            self.collectionViewHeightContraint?.constant = 0
+            self.layoutIfNeeded()
+        }
+    }
+    
+    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return selectionItems.count
+    }
+    
+    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return itemSize
+    }
+    
+    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cel", for: indexPath) as! TextCollectionCell
+        cell.label.text = selectionItems[indexPath.row]
+        return cell
     }
 }
 
