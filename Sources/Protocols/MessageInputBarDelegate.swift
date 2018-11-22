@@ -27,6 +27,13 @@ import Foundation
 /// A protocol that can receive different event notifications from the MessageInputBar.
 public protocol MessageInputBarDelegate: AnyObject {
     
+    /// Called when the one of selections in top view has been selected.
+    ///
+    /// - Parameters:
+    ///   - inputBar: The `MessageInputBar`.
+    ///   - text: The current text of the selected selection.
+    func messageInputBar(_ inputBar: MessageInputBar, topViewDidSelectedWith text: String)
+    
     /// Called when the default send button has been selected.
     ///
     /// - Parameters:

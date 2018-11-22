@@ -820,7 +820,7 @@ open class MessageInputBar: UIView {
 
 extension MessageInputBar: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        delegate?.messageInputBar(self, didPressSendButtonWith: selectionItems[indexPath.row])
+        delegate?.messageInputBar(self, topViewDidSelectedWith: selectionItems[indexPath.row])
         hideTopView()
     }
     
