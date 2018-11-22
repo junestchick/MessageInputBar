@@ -355,6 +355,8 @@ open class MessageInputBar: UIView {
         
         addSubview(backgroundView)
         addSubview(topCollectionView)
+        topCollectionView.delegate = self
+        topCollectionView.dataSource = self
         addSubview(contentView)
         addSubview(separatorLine)
         contentView.addSubview(inputTextView)
@@ -776,6 +778,7 @@ open class MessageInputBar: UIView {
             let count = selectionItems.count
             switch selectionItems.count {
             case 0..<4:
+                (topCollectionView.collectionViewLayout as! UICollectionViewFlowLayout).scrollDirection = .horizontal
                 itemSize = CGSize(width: topCollectionView.bounds.width / CGFloat(count), height: itemHeight)
             default:
                 itemSize = CGSize(width: topCollectionView.bounds.width, height: itemHeight)
@@ -791,8 +794,18 @@ open class MessageInputBar: UIView {
             newCollectionviewHeight = itemHeight * 3
         }
         UIView.animate(withDuration: 0.4) {
+            self.collectionViewHeightContraint?.isActive = true
             self.collectionViewHeightContraint?.constant = newCollectionviewHeight
             self.layoutIfNeeded()
+        }
+    }
+    
+    open func hideTopView() {
+        selectionItems.removeAll()
+        UIView.animate(withDuration: 0.4) {
+            self.collectionViewHeightContraint?.constant = 0
+            self.layoutIfNeeded()
+            self.invalidateIntrinsicContentSize()
         }
     }
     // MARK: - User Actions
@@ -808,10 +821,7 @@ open class MessageInputBar: UIView {
 extension MessageInputBar: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         delegate?.messageInputBar(self, didPressSendButtonWith: selectionItems[indexPath.row])
-        UIView.animate(withDuration: 0.4) {
-            self.collectionViewHeightContraint?.constant = 0
-            self.layoutIfNeeded()
-        }
+        hideTopView()
     }
     
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
