@@ -78,6 +78,18 @@ open class MessageInputBar: UIView {
     /// A SeparatorLine that is anchored at the top of the MessageInputBar with a height of 1
     public let separatorLine = SeparatorLine()
     
+    public var topCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumInteritemSpacing = 5
+        layout.minimumLineSpacing = 0
+        layout.scrollDirection = .vertical
+        let collectionV = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionV.backgroundColor = .white
+        collectionV.register(TextCollectionCell.self, forCellWithReuseIdentifier: "cel")
+        collectionV.translatesAutoresizingMaskIntoConstraints = false
+        return collectionV
+    }()
+    
     /**
      The InputStackView at the InputStackView.top position
      
@@ -85,11 +97,11 @@ open class MessageInputBar: UIView {
      1. It's axis is initially set to .vertical
      2. It's alignment is initially set to .fill
      */
-    public let topStackView: InputStackView = {
-        let stackView = InputStackView(axis: .vertical, spacing: 0)
-        stackView.alignment = .fill
-        return stackView
-    }()
+//    public let topStackView: InputStackView = {
+//        let stackView = InputStackView(axis: .vertical, spacing: 0)
+//        stackView.alignment = .fill
+//        return stackView
+//    }()
     
     /**
      The InputStackView at the InputStackView.left position
@@ -277,7 +289,8 @@ open class MessageInputBar: UIView {
     
     private var textViewLayoutSet: NSLayoutConstraintSet?
     private var textViewHeightAnchor: NSLayoutConstraint?
-    private var topStackViewLayoutSet: NSLayoutConstraintSet?
+    private var topCollectionViewLayoutSet: NSLayoutConstraintSet?
+    private var collectionViewHeightContraint: NSLayoutConstraint?
     private var leftStackViewLayoutSet: NSLayoutConstraintSet?
     private var rightStackViewLayoutSet: NSLayoutConstraintSet?
     private var bottomStackViewLayoutSet: NSLayoutConstraintSet?
@@ -341,7 +354,7 @@ open class MessageInputBar: UIView {
     private func setupSubviews() {
         
         addSubview(backgroundView)
-        addSubview(topStackView)
+        addSubview(topCollectionView)
         addSubview(contentView)
         addSubview(separatorLine)
         contentView.addSubview(inputTextView)
@@ -358,17 +371,18 @@ open class MessageInputBar: UIView {
         separatorLine.addConstraints(topAnchor, left: leftAnchor, right: rightAnchor, heightConstant: separatorLine.height)
         backgroundViewBottomAnchor = backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor)
         backgroundViewBottomAnchor?.isActive = true
-        backgroundView.addConstraints(topStackView.bottomAnchor, left: leftAnchor, right: rightAnchor)
+        backgroundView.addConstraints(topCollectionView.bottomAnchor, left: leftAnchor, right: rightAnchor)
         
-        topStackViewLayoutSet = NSLayoutConstraintSet(
-            top:    topStackView.topAnchor.constraint(equalTo: topAnchor, constant: topStackViewPadding.top),
-            bottom: topStackView.bottomAnchor.constraint(equalTo: contentView.topAnchor, constant: -padding.top),
-            left:   topStackView.leftAnchor.constraint(equalTo: leftAnchor, constant: topStackViewPadding.left),
-            right:  topStackView.rightAnchor.constraint(equalTo: rightAnchor, constant: -topStackViewPadding.right)
+        topCollectionViewLayoutSet = NSLayoutConstraintSet(
+            top:    topCollectionView.topAnchor.constraint(equalTo: topAnchor, constant: topStackViewPadding.top),
+            bottom: topCollectionView.bottomAnchor.constraint(equalTo: contentView.topAnchor, constant: -padding.top),
+            left:   topCollectionView.leftAnchor.constraint(equalTo: leftAnchor, constant: topStackViewPadding.left),
+            right:  topCollectionView.rightAnchor.constraint(equalTo: rightAnchor, constant: -topStackViewPadding.right)
         )
+        collectionViewHeightContraint = topCollectionView.heightAnchor.constraint(equalToConstant: 150)
         
         contentViewLayoutSet = NSLayoutConstraintSet(
-            top:    contentView.topAnchor.constraint(equalTo: topStackView.bottomAnchor, constant: padding.top),
+            top:    contentView.topAnchor.constraint(equalTo: topCollectionView.bottomAnchor, constant: padding.top),
             bottom: contentView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -padding.bottom),
             left:   contentView.leftAnchor.constraint(equalTo: leftAnchor, constant: padding.left),
             right:  contentView.rightAnchor.constraint(equalTo: rightAnchor, constant: -padding.right)
@@ -380,8 +394,8 @@ open class MessageInputBar: UIView {
             contentViewLayoutSet?.left = contentView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor, constant: padding.left)
             contentViewLayoutSet?.right = contentView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor, constant: -padding.right)
             
-            topStackViewLayoutSet?.left = topStackView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor, constant: topStackViewPadding.left)
-            topStackViewLayoutSet?.right = topStackView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor, constant: -topStackViewPadding.right)
+            topCollectionViewLayoutSet?.left = topCollectionView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor, constant: topStackViewPadding.left)
+            topCollectionViewLayoutSet?.right = topCollectionView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor, constant: -topStackViewPadding.right)
         }
         
         // Constraints Within the contentView
@@ -439,7 +453,7 @@ open class MessageInputBar: UIView {
     
     /// Updates the constraint constants that correspond to the padding UIEdgeInsets
     private func updatePadding() {
-        topStackViewLayoutSet?.bottom?.constant = -padding.top
+        topCollectionViewLayoutSet?.bottom?.constant = -padding.top
         contentViewLayoutSet?.top?.constant = padding.top
         contentViewLayoutSet?.left?.constant = padding.left
         contentViewLayoutSet?.right?.constant = -padding.right
@@ -458,9 +472,9 @@ open class MessageInputBar: UIView {
     
     /// Updates the constraint constants that correspond to the topStackViewPadding UIEdgeInsets
     private func updateTopStackViewPadding() {
-        topStackViewLayoutSet?.top?.constant = topStackViewPadding.top
-        topStackViewLayoutSet?.left?.constant = topStackViewPadding.left
-        topStackViewLayoutSet?.right?.constant = -topStackViewPadding.right
+        topCollectionViewLayoutSet?.top?.constant = topStackViewPadding.top
+        topCollectionViewLayoutSet?.left?.constant = topStackViewPadding.left
+        topCollectionViewLayoutSet?.right?.constant = -topStackViewPadding.right
     }
     
     /// Invalidates the view’s intrinsic content size
@@ -498,7 +512,7 @@ open class MessageInputBar: UIView {
         
         // Calculate the required height
         let totalPadding = padding.top + padding.bottom + topStackViewPadding.top + textViewPadding.top + textViewPadding.bottom
-        let topStackViewHeight = topStackView.arrangedSubviews.count > 0 ? topStackView.bounds.height : 0
+        let topStackViewHeight = topCollectionView.numberOfItems(inSection: 0) > 0 ? topCollectionView.bounds.height : 0
         let bottomStackViewHeight = bottomStackView.arrangedSubviews.count > 0 ? bottomStackView.bounds.height : 0
         let verticalStackViewHeight = topStackViewHeight + bottomStackViewHeight
         let requiredHeight = inputTextViewHeight + totalPadding + verticalStackViewHeight
@@ -536,8 +550,8 @@ open class MessageInputBar: UIView {
                 bottomStackView.setNeedsLayout()
                 bottomStackView.layoutIfNeeded()
             case .top:
-                topStackView.setNeedsLayout()
-                topStackView.layoutIfNeeded()
+                topCollectionView.setNeedsLayout()
+                topCollectionView.layoutIfNeeded()
             }
         }
     }
@@ -566,7 +580,7 @@ open class MessageInputBar: UIView {
         leftStackViewLayoutSet?.activate()
         rightStackViewLayoutSet?.activate()
         bottomStackViewLayoutSet?.activate()
-        topStackViewLayoutSet?.activate()
+        topCollectionViewLayoutSet?.activate()
     }
     
     /// Deactivates the NSLayoutConstraintSet's
@@ -576,7 +590,7 @@ open class MessageInputBar: UIView {
         leftStackViewLayoutSet?.deactivate()
         rightStackViewLayoutSet?.deactivate()
         bottomStackViewLayoutSet?.deactivate()
-        topStackViewLayoutSet?.deactivate()
+        topCollectionViewLayoutSet?.deactivate()
     }
     
     /// Removes all of the arranged subviews from the InputStackView and adds the given items.
@@ -626,18 +640,7 @@ open class MessageInputBar: UIView {
                 }
                 guard superview != nil else { return }
                 bottomStackView.layoutIfNeeded()
-            case .top:
-                topStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-                topStackViewItems = items
-                topStackViewItems.forEach {
-                    $0.messageInputBar = self
-                    $0.parentStackViewPosition = position
-                    if let view = $0 as? UIView {
-                        topStackView.addArrangedSubview(view)
-                    }
-                }
-                guard superview != nil else { return }
-                topStackView.layoutIfNeeded()
+            case .top: break
             }
             invalidateIntrinsicContentSize()
         }
@@ -773,5 +776,28 @@ open class MessageInputBar: UIView {
     /// Invalidates each of the InputPlugins
     open func didSelectSendButton() {
         delegate?.messageInputBar(self, didPressSendButtonWith: inputTextView.text)
+    }
+}
+
+class TextCollectionCell: UICollectionViewCell {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        initUI()
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+        initUI()
+    }
+    
+    var label: UILabel!
+    
+    func initUI() {
+        label = UILabel()
+        label.textColor = .blue
+        label.font = UIFont.systemFont(ofSize: 13)
+        label.textAlignment = .center
+        label.frame = bounds
+        addSubview(label)
     }
 }
