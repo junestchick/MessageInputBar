@@ -182,7 +182,7 @@ open class MessageInputBar: UIView {
      ````
      
      */
-    open var topStackViewPadding: UIEdgeInsets = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20) {
+    open var topStackViewPadding: UIEdgeInsets = UIEdgeInsets(top: 0, left: 30, bottom: 0, right: 30) {
         didSet {
             updateTopStackViewPadding()
         }
@@ -777,12 +777,14 @@ open class MessageInputBar: UIView {
     private var selectionItems = [String]() {
         didSet {
             let count = selectionItems.count
+            topCollectionView.collectionViewLayout.invalidateLayout()
             switch selectionItems.count {
-            case 0..<4:
+            case 0...3:
                 (topCollectionView.collectionViewLayout as! UICollectionViewFlowLayout).scrollDirection = .horizontal
                 itemSize = CGSize(width: topCollectionView.bounds.width / CGFloat(count), height: itemHeight)
             default:
-                itemSize = CGSize(width: topCollectionView.bounds.width, height: itemHeight)
+                (topCollectionView.collectionViewLayout as! UICollectionViewFlowLayout).scrollDirection = .vertical
+                itemSize = CGSize(width: topCollectionView.frame.width, height: itemHeight)
             }
         }
     }
@@ -835,7 +837,7 @@ extension MessageInputBar: UICollectionViewDelegate, UICollectionViewDataSource,
     
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cel", for: indexPath) as! TextCollectionCell
-        cell.label.text = selectionItems[indexPath.row]
+        cell.setText(selectionItems[indexPath.row], isVerticalListCell: selectionItems.count >= 4)
         return cell
     }
 }
@@ -857,11 +859,15 @@ class TextCollectionCell: UICollectionViewCell {
         label = UILabel()
         label.textColor = .blue
         label.font = UIFont.systemFont(ofSize: 17)
-        label.textAlignment = .center
         label.frame = bounds.inset(by: UIEdgeInsets(top: 5, left: 3, bottom: 5, right: 3))
-        label.layer.borderWidth = 1
         label.layer.borderColor = UIColor.lightGray.cgColor
         label.layer.cornerRadius = label.frame.size.height / 2.0
         addSubview(label)
+    }
+    
+    func setText(_ text: String, isVerticalListCell: Bool) {
+        label.textAlignment = isVerticalListCell ? .left : .center
+        label.layer.borderWidth = isVerticalListCell ? 0 : 1
+        label.text = text
     }
 }
