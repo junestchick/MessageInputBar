@@ -855,7 +855,7 @@ class TextCollectionCell: UICollectionViewCell {
     
     func initUI() {
         label = UILabel()
-        label.textColor = .lightGray
+        label.textColor = .blue
         label.font = UIFont.systemFont(ofSize: 17)
         label.textAlignment = .center
         label.frame = bounds.inset(by: UIEdgeInsets(top: 5, left: 3, bottom: 5, right: 3))
