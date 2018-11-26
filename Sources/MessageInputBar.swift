@@ -87,6 +87,7 @@ open class MessageInputBar: UIView {
         collectionV.backgroundColor = .white
         collectionV.register(TextCollectionCell.self, forCellWithReuseIdentifier: "cel")
         collectionV.translatesAutoresizingMaskIntoConstraints = false
+        collectionV.backgroundColor = .clear
         return collectionV
     }()
     
@@ -181,7 +182,7 @@ open class MessageInputBar: UIView {
      ````
      
      */
-    open var topStackViewPadding: UIEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) {
+    open var topStackViewPadding: UIEdgeInsets = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20) {
         didSet {
             updateTopStackViewPadding()
         }
@@ -771,7 +772,7 @@ open class MessageInputBar: UIView {
         plugins.forEach { $0.invalidate() }
     }
     // MARK: - Actions
-    private let itemHeight: CGFloat = 40
+    private let itemHeight: CGFloat = 50
     private var itemSize: CGSize = .zero
     private var selectionItems = [String]() {
         didSet {
@@ -854,10 +855,13 @@ class TextCollectionCell: UICollectionViewCell {
     
     func initUI() {
         label = UILabel()
-        label.textColor = .blue
-        label.font = UIFont.systemFont(ofSize: 13)
+        label.textColor = .lightGray
+        label.font = UIFont.systemFont(ofSize: 17)
         label.textAlignment = .center
-        label.frame = bounds
+        label.frame = bounds.inset(by: UIEdgeInsets(top: 5, left: 3, bottom: 5, right: 3))
+        label.layer.borderWidth = 1
+        label.layer.borderColor = UIColor.lightGray.cgColor
+        label.layer.cornerRadius = label.frame.size.height / 2.0
         addSubview(label)
     }
 }
