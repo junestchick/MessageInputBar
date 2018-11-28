@@ -31,7 +31,8 @@ open class MessageInputBar: UIView {
     
     /// A delegate to broadcast notifications from the `MessageInputBar`
     open weak var delegate: MessageInputBarDelegate?
-    
+    /// Font used id input bar
+    open var font: UIFont?
     /// The background UIView anchored to the bottom, left, and right of the MessageInputBar
     /// with a top anchor equal to the bottom of the top InputStackView
     open var backgroundView: UIView = {
@@ -78,6 +79,14 @@ open class MessageInputBar: UIView {
     /// A SeparatorLine that is anchored at the top of the MessageInputBar with a height of 1
     public let separatorLine = SeparatorLine()
     
+    public var topView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private var swipeView = UIView()
+    
     public var topCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.minimumInteritemSpacing = 5
@@ -91,6 +100,15 @@ open class MessageInputBar: UIView {
         return collectionV
     }()
     
+    private var noResultLabel: UILabel = {
+        let label = UILabel()
+        label.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        label.text = "No result"
+        label.textAlignment = .center
+        label.textColor = .lightGray
+        return label
+    }()
+    
     /**
      The InputStackView at the InputStackView.top position
      
@@ -98,11 +116,11 @@ open class MessageInputBar: UIView {
      1. It's axis is initially set to .vertical
      2. It's alignment is initially set to .fill
      */
-//    public let topStackView: InputStackView = {
-//        let stackView = InputStackView(axis: .vertical, spacing: 0)
-//        stackView.alignment = .fill
-//        return stackView
-//    }()
+    //    public let topStackView: InputStackView = {
+    //        let stackView = InputStackView(axis: .vertical, spacing: 0)
+    //        stackView.alignment = .fill
+    //        return stackView
+    //    }()
     
     /**
      The InputStackView at the InputStackView.left position
@@ -135,8 +153,8 @@ open class MessageInputBar: UIView {
         inputTextView.translatesAutoresizingMaskIntoConstraints = false
         inputTextView.messageInputBar = self
         return inputTextView
-    }()
-
+        }()
+    
     /// A InputBarButtonItem used as the send button and initially placed in the rightStackView
     open var sendButton: InputBarButtonItem = {
         return InputBarButtonItem()
@@ -182,7 +200,7 @@ open class MessageInputBar: UIView {
      ````
      
      */
-    open var topStackViewPadding: UIEdgeInsets = UIEdgeInsets(top: 0, left: 30, bottom: 0, right: 30) {
+    open var topStackViewPadding: UIEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) {
         didSet {
             updateTopStackViewPadding()
         }
@@ -290,8 +308,8 @@ open class MessageInputBar: UIView {
     
     private var textViewLayoutSet: NSLayoutConstraintSet?
     private var textViewHeightAnchor: NSLayoutConstraint?
-    private var topCollectionViewLayoutSet: NSLayoutConstraintSet?
-    private var collectionViewHeightContraint: NSLayoutConstraint?
+    private var topViewLayoutSet: NSLayoutConstraintSet?
+    private var topViewHeightContraint: NSLayoutConstraint?
     private var leftStackViewLayoutSet: NSLayoutConstraintSet?
     private var rightStackViewLayoutSet: NSLayoutConstraintSet?
     private var bottomStackViewLayoutSet: NSLayoutConstraintSet?
@@ -353,18 +371,84 @@ open class MessageInputBar: UIView {
     
     /// Adds all of the subviews
     private func setupSubviews() {
-        
+        if let font = self.font {
+            inputTextView.font = font.withSize(14)
+        }
         addSubview(backgroundView)
-        addSubview(topCollectionView)
-        topCollectionView.delegate = self
-        topCollectionView.dataSource = self
         addSubview(contentView)
         addSubview(separatorLine)
+        setupTopView()
         contentView.addSubview(inputTextView)
         contentView.addSubview(leftStackView)
         contentView.addSubview(rightStackView)
         contentView.addSubview(bottomStackView)
         setStackViewItems([sendButton], forStack: .right, animated: false)
+    }
+    
+    private func setupTopView() {
+        addSubview(topView)
+        topView.addSubview(topCollectionView)
+        topView.addSubview(swipeView)
+        swipeView.translatesAutoresizingMaskIntoConstraints = false
+        swipeView.layer.cornerRadius = 8
+        swipeView.backgroundColor = .white
+        let swipeUpGS = UISwipeGestureRecognizer(target: self, action: #selector(swipedUp))
+        swipeUpGS.direction = .up
+        swipeView.addGestureRecognizer(swipeUpGS)
+        
+        let swipeDownGS = UISwipeGestureRecognizer(target: self, action: #selector(swipedDown))
+        swipeDownGS.direction = .down
+        swipeView.addGestureRecognizer(swipeDownGS)
+//        swipeView.isUserInteractionEnabled = true
+        
+        topCollectionView.delegate = self
+        topCollectionView.dataSource = self
+        topView.clipsToBounds = true
+        topView.bringSubviewToFront(topCollectionView)
+    }
+    
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        addShadowForSwipeView()
+//        addShadowForSendButton()
+    }
+    
+    private func addShadowForSwipeView() {
+        swipeView.layer.masksToBounds = false
+        swipeView.clipsToBounds = false
+        swipeView.layer.shadowColor = UIColor.black.cgColor
+        swipeView.layer.shadowOffset = CGSize(width: 0, height: -5)
+        swipeView.layer.shadowRadius = 5
+        swipeView.layer.shadowOpacity = 0.06
+        swipeView.layer.shadowPath = UIBezierPath(rect: swipeView.bounds).cgPath
+    }
+    
+    private func addShadowForSendButton() {
+        sendButton.layer.masksToBounds = false
+        sendButton.clipsToBounds = false
+        sendButton.layer.shadowColor = UIColor.black.cgColor
+        sendButton.layer.shadowOffset = CGSize(width: 0, height: 1)
+        sendButton.layer.shadowRadius = 2
+        sendButton.layer.shadowOpacity = 0.12
+        sendButton.layer.shadowPath = UIBezierPath(rect: swipeView.bounds).cgPath
+    }
+    
+    @objc private func swipedUp() {
+//        UIView.animate(withDuration: 0.4) {
+//            self.topViewHeightContraint?.isActive = true
+//            self.topViewHeightContraint?.constant = 400
+//            self.layoutIfNeeded()
+//        }
+    }
+    
+    @objc private func swipedDown() {
+//        let dy = self.frame.origin.y - 44 - topView.frame.height
+//        print(dy)
+//        UIView.animate(withDuration: 0.0) {
+//            self.topViewHeightContraint?.isActive = true
+//            self.topViewHeightContraint?.constant = 185
+//            self.layoutIfNeeded()
+//        }
     }
     
     /// Sets up the initial constraints of each subview
@@ -376,16 +460,37 @@ open class MessageInputBar: UIView {
         backgroundViewBottomAnchor?.isActive = true
         backgroundView.addConstraints(topCollectionView.bottomAnchor, left: leftAnchor, right: rightAnchor)
         
-        topCollectionViewLayoutSet = NSLayoutConstraintSet(
-            top:    topCollectionView.topAnchor.constraint(equalTo: topAnchor, constant: topStackViewPadding.top),
-            bottom: topCollectionView.bottomAnchor.constraint(equalTo: contentView.topAnchor, constant: -padding.top),
-            left:   topCollectionView.leftAnchor.constraint(equalTo: leftAnchor, constant: topStackViewPadding.left),
-            right:  topCollectionView.rightAnchor.constraint(equalTo: rightAnchor, constant: -topStackViewPadding.right)
+        // Layout for collectionView and swipeView
+        swipeView.topAnchor.constraint(equalTo: topView.topAnchor, constant: 10).isActive = true
+        swipeView.widthAnchor.constraint(equalTo: topView.widthAnchor, constant: 0).isActive = true
+        swipeView.bottomAnchor.constraint(equalTo: topCollectionView.topAnchor, constant: 25).isActive = true
+        swipeView.centerXAnchor.constraint(equalTo: topView.centerXAnchor, constant: 0).isActive = true
+        swipeView.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        let swipeImage = UIImageView()
+        swipeImage.image = UIImage(named: "ic_swipe_bar")
+        swipeImage.translatesAutoresizingMaskIntoConstraints = false
+        swipeView.addSubview(swipeImage)
+        swipeImage.heightAnchor.constraint(equalToConstant: 3).isActive = true
+        swipeImage.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        swipeImage.centerXAnchor.constraint(equalTo: swipeView.centerXAnchor, constant: 0).isActive = true
+        swipeImage.centerYAnchor.constraint(equalTo: swipeView.centerYAnchor, constant: -11).isActive = true
+        topCollectionView.topAnchor.constraint(equalTo: swipeView.bottomAnchor, constant: -25).isActive = true
+        topCollectionView.widthAnchor.constraint(equalTo: topView.widthAnchor, constant: 0).isActive = true
+        topCollectionView.bottomAnchor.constraint(equalTo: topView.bottomAnchor, constant: 0).isActive = true
+        topCollectionView.centerXAnchor.constraint(equalTo: topView.centerXAnchor, constant: 0).isActive = true
+        
+        
+        topViewLayoutSet = NSLayoutConstraintSet(
+            top:    topView.topAnchor.constraint(equalTo: topAnchor, constant: topStackViewPadding.top),
+            bottom: topView.bottomAnchor.constraint(equalTo: contentView.topAnchor, constant: -padding.top),
+            left:   topView.leftAnchor.constraint(equalTo: leftAnchor, constant: topStackViewPadding.left),
+            right:  topView.rightAnchor.constraint(equalTo: rightAnchor, constant: -topStackViewPadding.right)
         )
-        collectionViewHeightContraint = topCollectionView.heightAnchor.constraint(equalToConstant: 150)
+        topViewHeightContraint = topView.heightAnchor.constraint(equalToConstant: 0)
+        topViewHeightContraint?.isActive = true
         
         contentViewLayoutSet = NSLayoutConstraintSet(
-            top:    contentView.topAnchor.constraint(equalTo: topCollectionView.bottomAnchor, constant: padding.top),
+            top:    contentView.topAnchor.constraint(equalTo: topView.bottomAnchor, constant: padding.top),
             bottom: contentView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -padding.bottom),
             left:   contentView.leftAnchor.constraint(equalTo: leftAnchor, constant: padding.left),
             right:  contentView.rightAnchor.constraint(equalTo: rightAnchor, constant: -padding.right)
@@ -397,8 +502,8 @@ open class MessageInputBar: UIView {
             contentViewLayoutSet?.left = contentView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor, constant: padding.left)
             contentViewLayoutSet?.right = contentView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor, constant: -padding.right)
             
-            topCollectionViewLayoutSet?.left = topCollectionView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor, constant: topStackViewPadding.left)
-            topCollectionViewLayoutSet?.right = topCollectionView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor, constant: -topStackViewPadding.right)
+            topViewLayoutSet?.left = topView.leftAnchor.constraint(equalTo: safeAreaLayoutGuide.leftAnchor, constant: topStackViewPadding.left)
+            topViewLayoutSet?.right = topView.rightAnchor.constraint(equalTo: safeAreaLayoutGuide.rightAnchor, constant: -topStackViewPadding.right)
         }
         
         // Constraints Within the contentView
@@ -456,7 +561,7 @@ open class MessageInputBar: UIView {
     
     /// Updates the constraint constants that correspond to the padding UIEdgeInsets
     private func updatePadding() {
-        topCollectionViewLayoutSet?.bottom?.constant = -padding.top
+        topViewLayoutSet?.bottom?.constant = -padding.top
         contentViewLayoutSet?.top?.constant = padding.top
         contentViewLayoutSet?.left?.constant = padding.left
         contentViewLayoutSet?.right?.constant = -padding.right
@@ -475,9 +580,9 @@ open class MessageInputBar: UIView {
     
     /// Updates the constraint constants that correspond to the topStackViewPadding UIEdgeInsets
     private func updateTopStackViewPadding() {
-        topCollectionViewLayoutSet?.top?.constant = topStackViewPadding.top
-        topCollectionViewLayoutSet?.left?.constant = topStackViewPadding.left
-        topCollectionViewLayoutSet?.right?.constant = -topStackViewPadding.right
+        topViewLayoutSet?.top?.constant = topStackViewPadding.top
+        topViewLayoutSet?.left?.constant = topStackViewPadding.left
+        topViewLayoutSet?.right?.constant = -topStackViewPadding.right
     }
     
     /// Invalidates the view’s intrinsic content size
@@ -515,7 +620,7 @@ open class MessageInputBar: UIView {
         
         // Calculate the required height
         let totalPadding = padding.top + padding.bottom + topStackViewPadding.top + textViewPadding.top + textViewPadding.bottom
-        let topStackViewHeight = topCollectionView.numberOfItems(inSection: 0) > 0 ? topCollectionView.bounds.height : 0
+        let topStackViewHeight = topCollectionView.numberOfItems(inSection: 0) > 0 ? topViewHeightContraint?.constant ?? 0 : 0
         let bottomStackViewHeight = bottomStackView.arrangedSubviews.count > 0 ? bottomStackView.bounds.height : 0
         let verticalStackViewHeight = topStackViewHeight + bottomStackViewHeight
         let requiredHeight = inputTextViewHeight + totalPadding + verticalStackViewHeight
@@ -553,8 +658,8 @@ open class MessageInputBar: UIView {
                 bottomStackView.setNeedsLayout()
                 bottomStackView.layoutIfNeeded()
             case .top:
-                topCollectionView.setNeedsLayout()
-                topCollectionView.layoutIfNeeded()
+                topView.setNeedsLayout()
+                topView.layoutIfNeeded()
             }
         }
     }
@@ -583,7 +688,7 @@ open class MessageInputBar: UIView {
         leftStackViewLayoutSet?.activate()
         rightStackViewLayoutSet?.activate()
         bottomStackViewLayoutSet?.activate()
-        topCollectionViewLayoutSet?.activate()
+        topViewLayoutSet?.activate()
     }
     
     /// Deactivates the NSLayoutConstraintSet's
@@ -593,7 +698,7 @@ open class MessageInputBar: UIView {
         leftStackViewLayoutSet?.deactivate()
         rightStackViewLayoutSet?.deactivate()
         bottomStackViewLayoutSet?.deactivate()
-        topCollectionViewLayoutSet?.deactivate()
+        topViewLayoutSet?.deactivate()
     }
     
     /// Removes all of the arranged subviews from the InputStackView and adds the given items.
@@ -622,6 +727,8 @@ open class MessageInputBar: UIView {
             case .right:
                 rightStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
                 rightStackViewItems = items
+                rightStackView.layer.masksToBounds = false
+                rightStackView.clipsToBounds = false
                 rightStackViewItems.forEach {
                     $0.messageInputBar = self
                     $0.parentStackViewPosition = position
@@ -746,6 +853,8 @@ open class MessageInputBar: UIView {
             // Prevent un-needed content size invalidation
             invalidateIntrinsicContentSize()
         }
+        guard topViewHeightContraint?.constant ?? 0 > 0 else { return } // is searching
+        keyword = trimmedText
     }
     
     /// Calls each items `keyboardEditingBeginsAction` method
@@ -772,47 +881,50 @@ open class MessageInputBar: UIView {
         plugins.forEach { $0.invalidate() }
     }
     // MARK: - Actions
-    private let itemHeight: CGFloat = 50
-    private var itemSize: CGSize = .zero
-    private var selectionItems = [String]() {
+    private var keyword = "" {
         didSet {
-            let count = selectionItems.count
-            topCollectionView.collectionViewLayout.invalidateLayout()
-            switch selectionItems.count {
-            case 0...3:
-                (topCollectionView.collectionViewLayout as! UICollectionViewFlowLayout).scrollDirection = .horizontal
-                itemSize = CGSize(width: topCollectionView.bounds.width / CGFloat(count), height: itemHeight)
-            default:
-                (topCollectionView.collectionViewLayout as! UICollectionViewFlowLayout).scrollDirection = .vertical
-                itemSize = CGSize(width: topCollectionView.frame.width, height: itemHeight)
+            dataSource = keyword.isEmpty ? selectionItems : selectionItems.filter({ $0.uppercased().contains(keyword.uppercased()) })
+            topCollectionView.reloadData()
+            let newCollectionviewHeight = itemSize.height * CGFloat(max(1, min(dataSource.count, 3)))
+            UIView.animate(withDuration: 0.0) {
+                self.topViewHeightContraint?.isActive = true
+                self.topViewHeightContraint?.constant = newCollectionviewHeight + self.topPadding
+                self.invalidateIntrinsicContentSize()
+                self.layoutIfNeeded()
             }
         }
     }
+    
+    private var dataSource = [String]()
+    private let itemHeight: CGFloat = 50
+    private var itemSize: CGSize = .zero
+    private var topPadding: CGFloat = 35
+    private var selectionItems = [String]() {
+        didSet {
+            topCollectionView.collectionViewLayout.invalidateLayout()
+            (topCollectionView.collectionViewLayout as! UICollectionViewFlowLayout).scrollDirection = .vertical
+            itemSize = CGSize(width: topCollectionView.frame.width, height: itemHeight)
+            keyword = ""
+        }
+    }
+    
     open func showTopView(with selections: [String]) {
         selectionItems = selections
-        topCollectionView.reloadData()
-        
-        var newCollectionviewHeight: CGFloat = itemHeight
-        if selections.count >= 4 {
-            newCollectionviewHeight = itemHeight * 3
-        }
-        UIView.animate(withDuration: 0.4) {
-            self.collectionViewHeightContraint?.isActive = true
-            self.collectionViewHeightContraint?.constant = newCollectionviewHeight
-            self.layoutIfNeeded()
-        }
+        setRightStackViewWidthConstant(to: 0, animated: true)
+        textViewPadding.right = 0
     }
     
     open func hideTopView() {
         selectionItems.removeAll()
-        UIView.animate(withDuration: 0.4) {
-            self.collectionViewHeightContraint?.constant = 0
-            self.layoutIfNeeded()
-            self.invalidateIntrinsicContentSize()
-        }
+        self.layoutIfNeeded()
+        self.invalidateIntrinsicContentSize()
+        self.keyword = ""
+        self.topViewHeightContraint?.constant = 0
+        setRightStackViewWidthConstant(to: 40, animated: true)
+        textViewPadding.right = 9
     }
     // MARK: - User Actions
-
+    
     /// Calls the delegates `didPressSendButtonWith` method
     /// Assumes that the InputTextView's text has been set to empty and calls `inputTextViewDidChange()`
     /// Invalidates each of the InputPlugins
@@ -823,12 +935,14 @@ open class MessageInputBar: UIView {
 
 extension MessageInputBar: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        delegate?.messageInputBar(self, topViewDidSelectedWith: selectionItems[indexPath.row])
+        let result = dataSource[indexPath.row].dropFirst().dropFirst()
+        delegate?.messageInputBar(self, topViewDidSelectedWith: String(result))
         hideTopView()
     }
     
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return selectionItems.count
+        topCollectionView.backgroundView = dataSource.isEmpty ? noResultLabel : nil
+        return dataSource.count
     }
     
     public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -837,7 +951,7 @@ extension MessageInputBar: UICollectionViewDelegate, UICollectionViewDataSource,
     
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cel", for: indexPath) as! TextCollectionCell
-        cell.setText(selectionItems[indexPath.row], isVerticalListCell: selectionItems.count >= 4)
+        cell.setText(dataSource[indexPath.row], font: self.font)
         return cell
     }
 }
@@ -857,17 +971,19 @@ class TextCollectionCell: UICollectionViewCell {
     
     func initUI() {
         label = UILabel()
-        label.textColor = .blue
+        label.textColor = .black
         label.font = UIFont.systemFont(ofSize: 17)
-        label.frame = bounds.inset(by: UIEdgeInsets(top: 5, left: 3, bottom: 5, right: 3))
+        label.frame = bounds.inset(by: UIEdgeInsets(top: 5, left: 12, bottom: 5, right: 10))
         label.layer.borderColor = UIColor.lightGray.cgColor
         label.layer.cornerRadius = label.frame.size.height / 2.0
+        label.textAlignment = .left
         addSubview(label)
     }
     
-    func setText(_ text: String, isVerticalListCell: Bool) {
-        label.textAlignment = isVerticalListCell ? .left : .center
-        label.layer.borderWidth = isVerticalListCell ? 0 : 1
+    func setText(_ text: String, font: UIFont?) {
         label.text = text
+        if let font = font {
+            label.font = font.withSize(16)
+        }
     }
 }
