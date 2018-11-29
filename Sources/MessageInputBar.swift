@@ -159,7 +159,7 @@ open class MessageInputBar: UIView {
     open var sendButton: InputBarButtonItem = {
         return InputBarButtonItem()
             .configure {
-                $0.setSize(CGSize(width: 52, height: 36), animated: false)
+                $0.setSize(CGSize(width: 40, height: 40), animated: false)
                 $0.isEnabled = false
                 $0.title = "Send"
                 $0.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: .bold)
@@ -275,7 +275,7 @@ open class MessageInputBar: UIView {
     }
     
     /// The fixed widthAnchor constant of the rightStackView
-    public private(set) var rightStackViewWidthConstant: CGFloat = 52 {
+    public private(set) var rightStackViewWidthConstant: CGFloat = 40 {
         didSet {
             rightStackViewLayoutSet?.width?.constant = rightStackViewWidthConstant
         }
@@ -380,9 +380,10 @@ open class MessageInputBar: UIView {
         setupTopView()
         contentView.addSubview(inputTextView)
         contentView.addSubview(leftStackView)
-        contentView.addSubview(rightStackView)
+        sendButton.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(sendButton)
         contentView.addSubview(bottomStackView)
-        setStackViewItems([sendButton], forStack: .right, animated: false)
+        //        setStackViewItems([sendButton], forStack: .right, animated: false)
     }
     
     private func setupTopView() {
@@ -399,7 +400,7 @@ open class MessageInputBar: UIView {
         let swipeDownGS = UISwipeGestureRecognizer(target: self, action: #selector(swipedDown))
         swipeDownGS.direction = .down
         swipeView.addGestureRecognizer(swipeDownGS)
-//        swipeView.isUserInteractionEnabled = true
+        //        swipeView.isUserInteractionEnabled = true
         
         topCollectionView.delegate = self
         topCollectionView.dataSource = self
@@ -410,7 +411,7 @@ open class MessageInputBar: UIView {
     open override func layoutSubviews() {
         super.layoutSubviews()
         addShadowForSwipeView()
-//        addShadowForSendButton()
+        addShadowForSendButton()
     }
     
     private func addShadowForSwipeView() {
@@ -424,31 +425,31 @@ open class MessageInputBar: UIView {
     }
     
     private func addShadowForSendButton() {
-        sendButton.layer.masksToBounds = false
+        sendButton.layer.masksToBounds = true
         sendButton.clipsToBounds = false
+        sendButton.layer.cornerRadius = 20
         sendButton.layer.shadowColor = UIColor.black.cgColor
-        sendButton.layer.shadowOffset = CGSize(width: 0, height: 1)
-        sendButton.layer.shadowRadius = 2
-        sendButton.layer.shadowOpacity = 0.12
-        sendButton.layer.shadowPath = UIBezierPath(rect: swipeView.bounds).cgPath
+        sendButton.layer.shadowOffset = CGSize(width: 1, height: 3)
+        sendButton.layer.shadowRadius = 4
+        sendButton.layer.shadowOpacity = 0.32
     }
     
     @objc private func swipedUp() {
-//        UIView.animate(withDuration: 0.4) {
-//            self.topViewHeightContraint?.isActive = true
-//            self.topViewHeightContraint?.constant = 400
-//            self.layoutIfNeeded()
-//        }
+        //        UIView.animate(withDuration: 0.4) {
+        //            self.topViewHeightContraint?.isActive = true
+        //            self.topViewHeightContraint?.constant = 400
+        //            self.layoutIfNeeded()
+        //        }
     }
     
     @objc private func swipedDown() {
-//        let dy = self.frame.origin.y - 44 - topView.frame.height
-//        print(dy)
-//        UIView.animate(withDuration: 0.0) {
-//            self.topViewHeightContraint?.isActive = true
-//            self.topViewHeightContraint?.constant = 185
-//            self.layoutIfNeeded()
-//        }
+        //        let dy = self.frame.origin.y - 44 - topView.frame.height
+        //        print(dy)
+        //        UIView.animate(withDuration: 0.0) {
+        //            self.topViewHeightContraint?.isActive = true
+        //            self.topViewHeightContraint?.constant = 185
+        //            self.layoutIfNeeded()
+        //        }
     }
     
     /// Sets up the initial constraints of each subview
@@ -511,7 +512,7 @@ open class MessageInputBar: UIView {
             top:    inputTextView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: textViewPadding.top),
             bottom: inputTextView.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -textViewPadding.bottom),
             left:   inputTextView.leftAnchor.constraint(equalTo: leftStackView.rightAnchor, constant: textViewPadding.left),
-            right:  inputTextView.rightAnchor.constraint(equalTo: rightStackView.leftAnchor, constant: -textViewPadding.right)
+            right:  inputTextView.rightAnchor.constraint(equalTo: sendButton.leftAnchor, constant: -textViewPadding.right)
         )
         maxTextViewHeight = calculateMaxTextViewHeight()
         textViewHeightAnchor = inputTextView.heightAnchor.constraint(equalToConstant: maxTextViewHeight)
@@ -524,10 +525,11 @@ open class MessageInputBar: UIView {
         )
         
         rightStackViewLayoutSet = NSLayoutConstraintSet(
-            top:    rightStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
-            bottom: rightStackView.bottomAnchor.constraint(equalTo: inputTextView.bottomAnchor, constant: 0),
-            right:  rightStackView.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: 0),
-            width:  rightStackView.widthAnchor.constraint(equalToConstant: rightStackViewWidthConstant)
+            top:    sendButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
+            bottom: sendButton.bottomAnchor.constraint(equalTo: inputTextView.bottomAnchor, constant: 0),
+            right:  sendButton.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: 0),
+            width:  sendButton.widthAnchor.constraint(equalToConstant: rightStackViewWidthConstant),
+            height: sendButton.heightAnchor.constraint(equalTo: inputTextView.heightAnchor, constant: 0)
         )
         
         bottomStackViewLayoutSet = NSLayoutConstraintSet(
@@ -782,7 +784,7 @@ open class MessageInputBar: UIView {
     open func setRightStackViewWidthConstant(to newValue: CGFloat, animated: Bool) {
         performLayout(animated) {
             self.rightStackViewWidthConstant = newValue
-            self.layoutStackViews([.right])
+            self.contentView.layoutIfNeeded()
             guard self.superview?.superview != nil else { return }
             self.superview?.superview?.layoutIfNeeded()
         }
