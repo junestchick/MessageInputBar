@@ -410,7 +410,7 @@ open class MessageInputBar: UIView {
     open override func layoutSubviews() {
         super.layoutSubviews()
         addShadowForSwipeView()
-        //        addShadowForSendButton()
+        addShadowForSendButton()
     }
     
     private func addShadowForSwipeView() {
@@ -424,13 +424,13 @@ open class MessageInputBar: UIView {
     }
     
     private func addShadowForSendButton() {
-        sendButton.layer.masksToBounds = false
+        sendButton.layer.masksToBounds = true
         sendButton.clipsToBounds = false
+        sendButton.layer.cornerRadius = 20
         sendButton.layer.shadowColor = UIColor.black.cgColor
-        sendButton.layer.shadowOffset = CGSize(width: 0, height: 1)
-        sendButton.layer.shadowRadius = 2
-        sendButton.layer.shadowOpacity = 0.12
-        sendButton.layer.shadowPath = UIBezierPath(rect: swipeView.bounds).cgPath
+        sendButton.layer.shadowOffset = CGSize(width: 1, height: 2)
+        sendButton.layer.shadowRadius = 3
+        sendButton.layer.shadowOpacity = 0.28
     }
     
     @objc private func swipedUp() {
@@ -524,8 +524,8 @@ open class MessageInputBar: UIView {
         )
         
         rightStackViewLayoutSet = NSLayoutConstraintSet(
-            top:    rightStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
-            bottom: rightStackView.bottomAnchor.constraint(equalTo: inputTextView.bottomAnchor, constant: 0),
+            top:    rightStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: -5),
+            bottom: rightStackView.bottomAnchor.constraint(equalTo: inputTextView.bottomAnchor, constant: 5),
             right:  rightStackView.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: 0),
             width:  rightStackView.widthAnchor.constraint(equalToConstant: rightStackViewWidthConstant)
         )
@@ -727,17 +727,22 @@ open class MessageInputBar: UIView {
             case .right:
                 rightStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
                 rightStackViewItems = items
-                rightStackView.layer.masksToBounds = false
-                rightStackView.clipsToBounds = false
-                rightStackViewItems.forEach {
-                    $0.messageInputBar = self
-                    $0.parentStackViewPosition = position
-                    if let view = $0 as? UIView {
-                        rightStackView.addArrangedSubview(view)
-                    }
-                }
+                rightStackView.layer.masksToBounds = true
+                //                rightStackView.clipsToBounds = true
+                rightStackView.alignment = .fill
+                let parent = UIView(frame: CGRect(x: 0, y: 0, width: 46, height: 46))
+                parent.translatesAutoresizingMaskIntoConstraints = false
+                parent.backgroundColor =  UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0)
+                parent.clipsToBounds = true
+                parent.isUserInteractionEnabled = true
+                sendButton.messageInputBar = self
+                sendButton.parentStackViewPosition = position
+                rightStackView.addArrangedSubview(parent)
+                sendButton.frame = parent.bounds.insetBy(dx: 3, dy: 3)
+                parent.addSubview(sendButton)
                 guard superview != nil else { return }
                 rightStackView.layoutIfNeeded()
+            //                addShadowForSendButton()
             case .bottom:
                 bottomStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
                 bottomStackViewItems = items
@@ -920,8 +925,8 @@ open class MessageInputBar: UIView {
         self.invalidateIntrinsicContentSize()
         self.keyword = ""
         self.topViewHeightContraint?.constant = 0
-        setRightStackViewWidthConstant(to: 40, animated: true)
-        textViewPadding.right = 9
+        setRightStackViewWidthConstant(to: 50, animated: true)
+        textViewPadding.right = 4
     }
     // MARK: - User Actions
     
