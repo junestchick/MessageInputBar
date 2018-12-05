@@ -888,7 +888,7 @@ open class MessageInputBar: UIView {
     // MARK: - Actions
     private var keyword = "" {
         didSet {
-            dataSource = keyword.isEmpty ? selectionItems : selectionItems.filter({ $0.uppercased().contains(keyword.uppercased()) })
+            dataSource = keyword.isEmpty ? [] : selectionItems.filter({ $0.uppercased().contains(keyword.uppercased()) })
             topCollectionView.reloadData()
             let newCollectionviewHeight = itemSize.height * CGFloat(max(1, min(dataSource.count, 3)))
             UIView.animate(withDuration: 0.0) {
