@@ -890,9 +890,8 @@ open class MessageInputBar: UIView {
             dataSource = keyword.isEmpty ? selectionItems : selectionItems.filter({ $0.uppercased().contains(keyword.uppercased()) })
             topCollectionView.reloadData()
             var newCollectionviewHeight: CGFloat = 0
-            if keyword.isEmpty && isFirstTimeSearch {
+            if keyword.isEmpty {
                 newCollectionviewHeight = 0
-                isFirstTimeSearch = false
             } else {
                 newCollectionviewHeight = itemSize.height * CGFloat(max(1, min(dataSource.count, 3))) + self.topPadding
             }
@@ -905,7 +904,6 @@ open class MessageInputBar: UIView {
         }
     }
     
-    private var isFirstTimeSearch = true
     private var dataSource = [String]()
     private let itemHeight: CGFloat = 50
     private var itemSize: CGSize = .zero
@@ -920,7 +918,6 @@ open class MessageInputBar: UIView {
     }
     
     open func showTopView(with selections: [String]) {
-        isFirstTimeSearch = true
         selectionItems = selections
         setRightStackViewWidthConstant(to: 0, animated: true)
         textViewPadding.right = 0
