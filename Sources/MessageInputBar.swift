@@ -858,7 +858,6 @@ open class MessageInputBar: UIView {
             // Prevent un-needed content size invalidation
             invalidateIntrinsicContentSize()
         }
-        guard topViewHeightContraint?.constant ?? 0 > 0 else { return } // is searching
         keyword = trimmedText
     }
     
@@ -888,18 +887,25 @@ open class MessageInputBar: UIView {
     // MARK: - Actions
     private var keyword = "" {
         didSet {
-            dataSource = keyword.isEmpty ? [] : selectionItems.filter({ $0.uppercased().contains(keyword.uppercased()) })
+            dataSource = keyword.isEmpty ? selectionItems : selectionItems.filter({ $0.uppercased().contains(keyword.uppercased()) })
             topCollectionView.reloadData()
-            let newCollectionviewHeight = itemSize.height * CGFloat(max(1, min(dataSource.count, 3)))
+            var newCollectionviewHeight: CGFloat = 0
+            if keyword.isEmpty && isFirstTimeSearch {
+                newCollectionviewHeight = 0
+                isFirstTimeSearch = false
+            } else {
+                newCollectionviewHeight = itemSize.height * CGFloat(max(1, min(dataSource.count, 3))) + self.topPadding
+            }
             UIView.animate(withDuration: 0.0) {
                 self.topViewHeightContraint?.isActive = true
-                self.topViewHeightContraint?.constant = newCollectionviewHeight + self.topPadding
+                self.topViewHeightContraint?.constant = newCollectionviewHeight
                 self.invalidateIntrinsicContentSize()
                 self.layoutIfNeeded()
             }
         }
     }
     
+    private var isFirstTimeSearch = true
     private var dataSource = [String]()
     private let itemHeight: CGFloat = 50
     private var itemSize: CGSize = .zero
@@ -914,6 +920,7 @@ open class MessageInputBar: UIView {
     }
     
     open func showTopView(with selections: [String]) {
+        isFirstTimeSearch = true
         selectionItems = selections
         setRightStackViewWidthConstant(to: 0, animated: true)
         textViewPadding.right = 0
