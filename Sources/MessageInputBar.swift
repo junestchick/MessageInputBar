@@ -310,6 +310,7 @@ open class MessageInputBar: UIView {
     private var textViewHeightAnchor: NSLayoutConstraint?
     private var topViewLayoutSet: NSLayoutConstraintSet?
     private var topViewHeightContraint: NSLayoutConstraint?
+    private var swipeViewHeightContraint: NSLayoutConstraint?
     private var leftStackViewLayoutSet: NSLayoutConstraintSet?
     private var rightStackViewLayoutSet: NSLayoutConstraintSet?
     private var bottomStackViewLayoutSet: NSLayoutConstraintSet?
@@ -465,7 +466,8 @@ open class MessageInputBar: UIView {
         swipeView.widthAnchor.constraint(equalTo: topView.widthAnchor, constant: 0).isActive = true
         swipeView.bottomAnchor.constraint(equalTo: topCollectionView.topAnchor, constant: 25).isActive = true
         swipeView.centerXAnchor.constraint(equalTo: topView.centerXAnchor, constant: 0).isActive = true
-        swipeView.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        swipeViewHeightContraint = swipeView.heightAnchor.constraint(equalToConstant: 0)
+        swipeViewHeightContraint?.isActive = true
         let swipeImage = UIImageView()
         swipeImage.image = UIImage(named: "ic_swipe_bar")
         swipeImage.translatesAutoresizingMaskIntoConstraints = false
@@ -892,8 +894,10 @@ open class MessageInputBar: UIView {
             var newCollectionviewHeight: CGFloat = 0
             if keyword.isEmpty {
                 newCollectionviewHeight = 0
+                self.swipeViewHeightContraint?.constant = 0
             } else {
                 newCollectionviewHeight = itemSize.height * CGFloat(max(1, min(dataSource.count, 3))) + self.topPadding
+                self.swipeViewHeightContraint?.constant = 50
             }
             UIView.animate(withDuration: 0.0) {
                 self.topViewHeightContraint?.isActive = true
@@ -929,6 +933,7 @@ open class MessageInputBar: UIView {
         self.invalidateIntrinsicContentSize()
         self.keyword = ""
         self.topViewHeightContraint?.constant = 0
+        self.swipeViewHeightContraint?.constant = 0
         setRightStackViewWidthConstant(to: 50, animated: true)
         textViewPadding.right = 4
     }
